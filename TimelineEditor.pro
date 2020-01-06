@@ -25,14 +25,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp
+        src/main.cpp \
+    src/timelinewidget.cpp
 
 HEADERS += \
-        mainwindow.h
+    src/timelinewidget.h
 
-FORMS += \
-        mainwindow.ui
+FORMS +=
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
