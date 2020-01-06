@@ -30,7 +30,12 @@ SOURCES += \
     src/timelinetool/timelineabstracttool.cpp \
     src/timelinetool/timelinetooldelegate.cpp \
     src/timelinetool/timelinemovetool.cpp \
-    src/timelinetool/timelineselectiontool.cpp
+    src/timelinetool/timelineselectiontool.cpp \
+    src/timelinegraphicsscene.cpp \
+    src/timelineitem/timelinemovableitem.cpp \
+    src/timelineitem/timelineitem.cpp \
+    src/timelineitem/timelineframehandle.cpp \
+    src/timelineutils.cpp
 
 HEADERS += \
     src/timelinewidget.h \
@@ -38,7 +43,12 @@ HEADERS += \
     src/timelinetool/timelineabstracttool.h \
     src/timelinetool/timelinetooldelegate.h \
     src/timelinetool/timelinemovetool.h \
-    src/timelinetool/timelineselectiontool.h
+    src/timelinetool/timelineselectiontool.h \
+    src/timelinegraphicsscene.h \
+    src/timelineitem/timelinemovableitem.h \
+    src/timelineitem/timelineitem.h \
+    src/timelineitem/timelineframehandle.h \
+    src/timelineutils.h
 
 FORMS +=
 

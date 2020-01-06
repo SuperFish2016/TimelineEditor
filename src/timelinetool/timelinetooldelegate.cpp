@@ -8,7 +8,7 @@ TimelineToolDelegate::TimelineToolDelegate(TimelineGraphicsScene *scene)
 
 }
 
-void TimelineToolDelegate::mousePressEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineToolDelegate::mousePressEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
     if (event->buttons() == Qt::LeftButton && hitCanvas(event)) {
         start_ = event->scenePos();
@@ -29,20 +29,20 @@ void TimelineToolDelegate::mousePressEvent(TimelineMovableAbstractItem *item, QG
         current_tool_->mousePressEvent(item, event);
 }
 
-void TimelineToolDelegate::mouseMoveEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineToolDelegate::mouseMoveEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
     if (current_tool_)
         current_tool_->mouseMoveEvent(item, event);
 }
 
-void TimelineToolDelegate::mouseReleaseEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineToolDelegate::mouseReleaseEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
     if (current_tool_)
         current_tool_->mouseReleaseEvent(item, event);
     reset();
 }
 
-void TimelineToolDelegate::mouseDoubleClickEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineToolDelegate::mouseDoubleClickEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
     if (hitCanvas(event)) {
         current_tool_ = select_tool_.get();
@@ -58,7 +58,7 @@ void TimelineToolDelegate::clearSelection()
     current_item_ = nullptr;
 }
 
-void TimelineToolDelegate::setItem(TimelineMovableAbstractItem *item, const Qt::KeyboardModifiers &modifiers)
+void TimelineToolDelegate::setItem(TimelineMovableItem *item, const Qt::KeyboardModifiers &modifiers)
 {
     if (item) {
         setItem(nullptr);

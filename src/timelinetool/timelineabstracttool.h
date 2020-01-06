@@ -5,7 +5,7 @@
 
 class TimelineGraphicsScene;
 class TimelineToolDelegate;
-class TimelineMovableAbstractItem;
+class TimelineMovableItem;
 
 class TimelineAbstractTool
 {
@@ -16,17 +16,17 @@ public:
     explicit TimelineAbstractTool(TimelineGraphicsScene* scene, TimelineToolDelegate* delegate);
     virtual ~TimelineAbstractTool();
 
-    virtual void mousePressEvent(TimelineMovableAbstractItem       *item, QGraphicsSceneMouseEvent *event) = 0;
-    virtual void mouseMoveEvent(TimelineMovableAbstractItem        *item, QGraphicsSceneMouseEvent *event) = 0;
-    virtual void mouseReleaseEvent(TimelineMovableAbstractItem     *item, QGraphicsSceneMouseEvent *event) = 0;
-    virtual void mouseDoubleClickEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event) = 0;
+    virtual void mousePressEvent(TimelineMovableItem       *item, QGraphicsSceneMouseEvent *event) = 0;
+    virtual void mouseMoveEvent(TimelineMovableItem        *item, QGraphicsSceneMouseEvent *event) = 0;
+    virtual void mouseReleaseEvent(TimelineMovableItem     *item, QGraphicsSceneMouseEvent *event) = 0;
+    virtual void mouseDoubleClickEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event) = 0;
 
     virtual void keyPressEvent(QKeyEvent    *keyEvent) = 0;
     virtual void keyReleaseEvent(QKeyEvent  *keyEvent) = 0;
 
     TimelineGraphicsScene* scene()    const;
     TimelineToolDelegate*  delegate() const;
-    TimelineMovableAbstractItem *currentItem() const;
+    TimelineMovableItem *currentItem() const;
     QPointF startPosition() const;
 private:
     TimelineGraphicsScene* scene_;

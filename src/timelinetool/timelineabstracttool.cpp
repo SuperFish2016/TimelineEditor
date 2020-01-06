@@ -29,7 +29,7 @@ QPointF TimelineAbstractTool::startPosition() const
     return tool_delegate_->startPoint();
 }
 
-TimelineMovableAbstractItem *TimelineAbstractTool::currentItem() const
+TimelineMovableItem *TimelineAbstractTool::currentItem() const
 {
     return tool_delegate_->item();
 }

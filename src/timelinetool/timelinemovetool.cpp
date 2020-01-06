@@ -7,22 +7,22 @@ TimelineMoveTool::TimelineMoveTool(TimelineGraphicsScene *scene, TimelineToolDel
 
 }
 
-void TimelineMoveTool::mousePressEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineMoveTool::mousePressEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
 
 }
 
-void TimelineMoveTool::mouseMoveEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineMoveTool::mouseMoveEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
 
 }
 
-void TimelineMoveTool::mouseReleaseEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineMoveTool::mouseReleaseEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
 
 }
 
-void TimelineMoveTool::mouseDoubleClickEvent(TimelineMovableAbstractItem *item, QGraphicsSceneMouseEvent *event)
+void TimelineMoveTool::mouseDoubleClickEvent(TimelineMovableItem *item, QGraphicsSceneMouseEvent *event)
 {
 
 }
