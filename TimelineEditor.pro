@@ -26,10 +26,19 @@ CONFIG += c++11
 
 SOURCES += \
         src/main.cpp \
-    src/timelinewidget.cpp
+    src/timelinewidget.cpp \
+    src/timelinetool/timelineabstracttool.cpp \
+    src/timelinetool/timelinetooldelegate.cpp \
+    src/timelinetool/timelinemovetool.cpp \
+    src/timelinetool/timelineselectiontool.cpp
 
 HEADERS += \
-    src/timelinewidget.h
+    src/timelinewidget.h \
+    src/timelineconstants.h \
+    src/timelinetool/timelineabstracttool.h \
+    src/timelinetool/timelinetooldelegate.h \
+    src/timelinetool/timelinemovetool.h \
+    src/timelinetool/timelineselectiontool.h
 
 FORMS +=
 
