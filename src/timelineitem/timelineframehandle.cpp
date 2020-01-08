@@ -1,7 +1,7 @@
 ﻿#include "timelineframehandle.h"
 #include "../timelinegraphicsscene.h"
-#include "../timelineconstants.h"
-#include "../timelineutils.h"
+#include "timelineconstants.h"
+#include "timelineutils.h"
 #include <QApplication>
 #include <QPainter>
 #include <QCursor>

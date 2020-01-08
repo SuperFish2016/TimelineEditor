@@ -3,7 +3,7 @@
 
 #include <QCoreApplication>
 #include <QGraphicsRectItem>
-#include "../timelineconstants.h"
+#include "timelineconstants.h"
 
 class TimelineGraphicsScene;
 class TimelineKeyframeItem;

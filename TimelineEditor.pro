@@ -24,6 +24,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+INCLUDEPATH += src/timelineutils
 SOURCES += \
         src/main.cpp \
     src/timelinewidget.cpp \
@@ -35,11 +36,12 @@ SOURCES += \
     src/timelineitem/timelinemovableitem.cpp \
     src/timelineitem/timelineitem.cpp \
     src/timelineitem/timelineframehandle.cpp \
-    src/timelineutils.cpp
+    src/timelineutils/timelineutils.cpp \
+    src/timelineutils/timelineicon.cpp \
+    src/timelineutils/timelinetheme.cpp
 
 HEADERS += \
     src/timelinewidget.h \
-    src/timelineconstants.h \
     src/timelinetool/timelineabstracttool.h \
     src/timelinetool/timelinetooldelegate.h \
     src/timelinetool/timelinemovetool.h \
@@ -48,11 +50,18 @@ HEADERS += \
     src/timelineitem/timelinemovableitem.h \
     src/timelineitem/timelineitem.h \
     src/timelineitem/timelineframehandle.h \
-    src/timelineutils.h
+    src/timelineutils/timelineutils.h \
+    src/timelineutils/timelineconstants.h \
+    src/timelineutils/timelineicon.h \
+    src/timelineutils/timelinetheme.h
 
 FORMS +=
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    src/timelineeditor.qrc

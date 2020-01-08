@@ -1,5 +1,5 @@
 ﻿#include "timelinetooldelegate.h"
-#include "../timelineconstants.h"
+#include "timelineconstants.h"
 TimelineToolDelegate::TimelineToolDelegate(TimelineGraphicsScene *scene)
     : scene_(scene), start_(),
       move_tool_(new TimelineMoveTool(scene, this)),
