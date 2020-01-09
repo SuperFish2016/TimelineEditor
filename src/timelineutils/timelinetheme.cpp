@@ -1,272 +1,255 @@
 ﻿#include "timelinetheme.h"
-#include <QMetaEnum>
+
 #include <QApplication>
-#include <QPalette>
-static AppTheme *m_creatorTheme = nullptr;
-
-AppThemePrivate::AppThemePrivate()
-{
-    const QMetaObject &m = AppTheme::staticMetaObject;
-    colors.resize        (m.enumerator(m.indexOfEnumerator("Color")).keyCount());
-    imageFiles.resize    (m.enumerator(m.indexOfEnumerator("ImageFile")).keyCount());
-    gradients.resize     (m.enumerator(m.indexOfEnumerator("Gradient")).keyCount());
-    flags.resize         (m.enumerator(m.indexOfEnumerator("Flag")).keyCount());
-}
-
-AppTheme *creatorTheme()
-{
-    return m_creatorTheme;
-}
-
-AppTheme *proxyTheme()
-{
-    return new AppTheme(m_creatorTheme);
-}
-
-void setThemeApplicationPalette()
-{
-    if (m_creatorTheme && m_creatorTheme->flag(AppTheme::ApplyThemePaletteGlobally))
-        QApplication::setPalette(m_creatorTheme->palette());
-}
-
-void setCreatorTheme(AppTheme *theme)
-{
-    if (m_creatorTheme == theme)
-        return;
-    delete m_creatorTheme;
-    m_creatorTheme = theme;
-    setThemeApplicationPalette();
-}
-
-AppTheme::AppTheme(const QString &id, QObject *parent)
-  : QObject(parent), d(new AppThemePrivate())
-{
-    d->id = id;
-}
-
-AppTheme::AppTheme(AppTheme *originTheme, QObject *parent)
-    : QObject(parent)
-    , d(new AppThemePrivate(*(originTheme->d)))
+#include <QRegExp>
+#include <QScreen>
+#include <QPointer>
+#include <QMetaEnum>
+#include <QDebug>
+TimelineTheme::TimelineTheme(AppTheme *originTheme, QObject *parent)
+    : AppTheme(originTheme, parent)
 {
 }
 
-AppTheme::~AppTheme()
+QColor TimelineTheme::evaluateColorAtThemeInstance(const QString &themeColorName)
 {
-    delete d;
-}
-
-QStringList AppTheme::preferredStyles() const
-{
-    return d->preferredStyles;
-}
-
-QString AppTheme::defaultTextEditorColorScheme() const
-{
-    return d->defaultTextEditorColorScheme;
-}
-
-QString AppTheme::id() const
-{
-    return d->id;
-}
-
-bool AppTheme::flag(AppTheme::Flag f) const
-{
-    return d->flags[f];
-}
-
-QColor AppTheme::color(AppTheme::Color role) const
-{
-    return d->colors[role].first;
-}
-
-QString AppTheme::imageFile(AppTheme::ImageFile imageFile, const QString &fallBack) const
-{
-    const QString &file = d->imageFiles.at(imageFile);
-    return file.isEmpty() ? fallBack : file;
-}
-
-QGradientStops AppTheme::gradient(AppTheme::Gradient role) const
-{
-    return d->gradients[role];
-}
-
-QPair<QColor, QString> AppTheme::readNamedColor(const QString &color) const
-{
-    if (d->palette.contains(color))
-        return qMakePair(d->palette[color], color);
-    if (color == QLatin1String("style"))
-        return qMakePair(QColor(), QString());
-
-    const QColor col('#' + color);
-    if (!col.isValid()) {
-        qWarning("Color \"%s\" is neither a named color nor a valid color", qPrintable(color));
-        return qMakePair(Qt::black, QString());
-    }
-    return qMakePair(col, QString());
-}
-
-QString AppTheme::filePath() const
-{
-    return d->fileName;
-}
-
-QString AppTheme::displayName() const
-{
-    return d->displayName;
-}
-
-void AppTheme::setDisplayName(const QString &name)
-{
-    d->displayName = name;
-}
-
-void AppTheme::readSettings(QSettings &settings)
-{
-    d->fileName = settings.fileName();
     const QMetaObject &m = *metaObject();
+    const QMetaEnum e = m.enumerator(m.indexOfEnumerator("Color"));
+    for (int i = 0, total = e.keyCount(); i < total; ++i) {
+        if (QString::fromLatin1(e.key(i)) == themeColorName)
+            return color(static_cast<AppTheme::Color>(i)).name();
+    }
 
-    {
-        d->displayName = settings.value(QLatin1String("ThemeName"), QLatin1String("unnamed")).toString();
-        d->preferredStyles = settings.value(QLatin1String("PreferredStyles")).toStringList();
-        d->preferredStyles.removeAll(QString());
-        d->defaultTextEditorColorScheme =
-                settings.value(QLatin1String("DefaultTextEditorColorScheme")).toString();
-    }
-    {
-        settings.beginGroup(QLatin1String("Palette"));
-        foreach (const QString &key, settings.allKeys())
-            d->palette[key] = readNamedColor(settings.value(key).toString()).first;
-        settings.endGroup();
-    }
-    {
-        settings.beginGroup(QLatin1String("Colors"));
-        QMetaEnum e = m.enumerator(m.indexOfEnumerator("Color"));
-        for (int i = 0, total = e.keyCount(); i < total; ++i) {
-            const QString key = QLatin1String(e.key(i));
-            if (!settings.contains(key)) {
-                if (i < PaletteWindow || i > PaletteShadowDisabled)
-                    qWarning("Theme \"%s\" misses color setting for key \"%s\".",
-                             qPrintable(d->fileName), qPrintable(key));
-                continue;
-            }
-            d->colors[i] = readNamedColor(settings.value(key).toString());
-        }
-        settings.endGroup();
-    }
-    {
-        settings.beginGroup(QLatin1String("ImageFiles"));
-        QMetaEnum e = m.enumerator(m.indexOfEnumerator("ImageFile"));
-        for (int i = 0, total = e.keyCount(); i < total; ++i) {
-            const QString key = QLatin1String(e.key(i));
-            d->imageFiles[i] = settings.value(key).toString();
-        }
-        settings.endGroup();
-    }
-    {
-        settings.beginGroup(QLatin1String("Gradients"));
-        QMetaEnum e = m.enumerator(m.indexOfEnumerator("Gradient"));
-        for (int i = 0, total = e.keyCount(); i < total; ++i) {
-            const QString key = QLatin1String(e.key(i));
-            QGradientStops stops;
-            int size = settings.beginReadArray(key);
-            for (int j = 0; j < size; ++j) {
-                settings.setArrayIndex(j);
-                if(settings.contains(QLatin1String("pos")))
-                     return;
-                const double pos = settings.value(QLatin1String("pos")).toDouble();
-                if(settings.contains(QLatin1String("color")))
-                    return;
-                const QColor c('#' + settings.value(QLatin1String("color")).toString());
-                stops.append(qMakePair(pos, c));
-            }
-            settings.endArray();
-            d->gradients[i] = stops;
-        }
-        settings.endGroup();
-    }
-    {
-        settings.beginGroup(QLatin1String("Flags"));
-        QMetaEnum e = m.enumerator(m.indexOfEnumerator("Flag"));
-        for (int i = 0, total = e.keyCount(); i < total; ++i) {
-            const QString key = QLatin1String(e.key(i));
-            if(settings.contains(key))
-                return;
-            d->flags[i] = settings.value(key).toBool();
-        }
-        settings.endGroup();
-    }
+    qWarning() << Q_FUNC_INFO << "error while evaluating" << themeColorName;
+    return {};
 }
 
-QPalette AppTheme::initialPalette()
+TimelineTheme *TimelineTheme::instance()
 {
-    static QPalette palette = QApplication::palette();
-    return palette;
+    static QPointer<TimelineTheme> qmldesignerTheme = new TimelineTheme(appTheme(), nullptr);
+    return qmldesignerTheme;
 }
 
-QPalette AppTheme::palette() const
+QString TimelineTheme::replaceCssColors(const QString &input)
 {
-    QPalette pal = initialPalette();
-    if (!flag(DerivePaletteFromTheme))
-        return pal;
+    QRegExp rx("creatorTheme\\.(\\w+)");
 
-    const static struct {
-        Color themeColor;
-        QPalette::ColorRole paletteColorRole;
-        QPalette::ColorGroup paletteColorGroup;
-        bool setColorRoleAsBrush;
-    } mapping[] = {
-        {PaletteWindow,                    QPalette::Window,           QPalette::All,      false},
-        {PaletteWindowDisabled,            QPalette::Window,           QPalette::Disabled, false},
-        {PaletteWindowText,                QPalette::WindowText,       QPalette::All,      true},
-        {PaletteWindowTextDisabled,        QPalette::WindowText,       QPalette::Disabled, true},
-        {PaletteBase,                      QPalette::Base,             QPalette::All,      false},
-        {PaletteBaseDisabled,              QPalette::Base,             QPalette::Disabled, false},
-        {PaletteAlternateBase,             QPalette::AlternateBase,    QPalette::All,      false},
-        {PaletteAlternateBaseDisabled,     QPalette::AlternateBase,    QPalette::Disabled, false},
-        {PaletteToolTipBase,               QPalette::ToolTipBase,      QPalette::All,      true},
-        {PaletteToolTipBaseDisabled,       QPalette::ToolTipBase,      QPalette::Disabled, true},
-        {PaletteToolTipText,               QPalette::ToolTipText,      QPalette::All,      false},
-        {PaletteToolTipTextDisabled,       QPalette::ToolTipText,      QPalette::Disabled, false},
-        {PaletteText,                      QPalette::Text,             QPalette::All,      true},
-        {PaletteTextDisabled,              QPalette::Text,             QPalette::Disabled, true},
-        {PaletteButton,                    QPalette::Button,           QPalette::All,      false},
-        {PaletteButtonDisabled,            QPalette::Button,           QPalette::Disabled, false},
-        {PaletteButtonText,                QPalette::ButtonText,       QPalette::All,      true},
-        {PaletteButtonTextDisabled,        QPalette::ButtonText,       QPalette::Disabled, true},
-        {PaletteBrightText,                QPalette::BrightText,       QPalette::All,      false},
-        {PaletteBrightTextDisabled,        QPalette::BrightText,       QPalette::Disabled, false},
-        {PaletteHighlight,                 QPalette::Highlight,        QPalette::All,      true},
-        {PaletteHighlightDisabled,         QPalette::Highlight,        QPalette::Disabled, true},
-        {PaletteHighlightedText,           QPalette::HighlightedText,  QPalette::All,      true},
-        {PaletteHighlightedTextDisabled,   QPalette::HighlightedText,  QPalette::Disabled, true},
-        {PaletteLink,                      QPalette::Link,             QPalette::All,      false},
-        {PaletteLinkDisabled,              QPalette::Link,             QPalette::Disabled, false},
-        {PaletteLinkVisited,               QPalette::LinkVisited,      QPalette::All,      false},
-        {PaletteLinkVisitedDisabled,       QPalette::LinkVisited,      QPalette::Disabled, false},
-        {PaletteLight,                     QPalette::Light,            QPalette::All,      false},
-        {PaletteLightDisabled,             QPalette::Light,            QPalette::Disabled, false},
-        {PaletteMidlight,                  QPalette::Midlight,         QPalette::All,      false},
-        {PaletteMidlightDisabled,          QPalette::Midlight,         QPalette::Disabled, false},
-        {PaletteDark,                      QPalette::Dark,             QPalette::All,      false},
-        {PaletteDarkDisabled,              QPalette::Dark,             QPalette::Disabled, false},
-        {PaletteMid,                       QPalette::Mid,              QPalette::All,      false},
-        {PaletteMidDisabled,               QPalette::Mid,              QPalette::Disabled, false},
-        {PaletteShadow,                    QPalette::Shadow,           QPalette::All,      false},
-        {PaletteShadowDisabled,            QPalette::Shadow,           QPalette::Disabled, false}
-    };
+    int pos = 0;
+    QString output = input;
 
-    for (auto entry: mapping) {
-        const QColor themeColor = color(entry.themeColor);
-        // Use original color if color is not defined in theme.
-        if (themeColor.isValid()) {
-            if (entry.setColorRoleAsBrush)
-                // TODO: Find out why sometimes setBrush is used
-                pal.setBrush(entry.paletteColorGroup, entry.paletteColorRole, themeColor);
-            else
-                pal.setColor(entry.paletteColorGroup, entry.paletteColorRole, themeColor);
+    while ((pos = rx.indexIn(input, pos)) != -1) {
+        const QString themeColorName = rx.cap(1);
+
+        if (themeColorName == "smallFontPixelSize") {
+            output.replace("creatorTheme." + themeColorName, QString::number(instance()->smallFontPixelSize()) + "px");
+        } else if (themeColorName == "captionFontPixelSize") {
+            output.replace("creatorTheme." + themeColorName, QString::number(instance()->captionFontPixelSize()) + "px");
+        } else {
+            const QColor color = instance()->evaluateColorAtThemeInstance(themeColorName);
+            output.replace("creatorTheme." + rx.cap(1), color.name());
         }
+        pos += rx.matchedLength();
     }
 
-    return pal;
+    return output;
+}
+
+QColor TimelineTheme::getColor(AppTheme::Color role)
+{
+    return instance()->color(role);
+}
+
+int TimelineTheme::smallFontPixelSize() const
+{
+    if (highPixelDensity())
+        return 13;
+    return 9;
+}
+
+int TimelineTheme::captionFontPixelSize() const
+{
+    if (highPixelDensity())
+        return 14;
+    return 11;
+}
+
+bool TimelineTheme::highPixelDensity() const
+{
+    return qApp->primaryScreen()->logicalDotsPerInch() > 100;
+}
+
+QPixmap TimelineTheme::getPixmap(const QString &id)
+{
+    return AppIconProvider::getPixmap(id);
+}
+
+QColor TimelineTheme::qmlDesignerBackgroundColorDarker() const
+{
+    return getColor(QmlDesigner_BackgroundColorDarker);
+}
+
+QColor TimelineTheme::qmlDesignerBackgroundColorDarkAlternate() const
+{
+    return getColor(QmlDesigner_BackgroundColorDarkAlternate);
+}
+
+QColor TimelineTheme::qmlDesignerTabLight() const
+{
+    return getColor(QmlDesigner_TabLight);
+}
+
+QColor TimelineTheme::qmlDesignerTabDark() const
+{
+    return getColor(QmlDesigner_TabDark);
+}
+
+QColor TimelineTheme::qmlDesignerButtonColor() const
+{
+    return getColor(QmlDesigner_ButtonColor);
+}
+
+QColor TimelineTheme::qmlDesignerBorderColor() const
+{
+    return getColor(QmlDesigner_BorderColor);
+}
+
+#include "timelineicon.h"
+static QString iconPath()
+{
+    //return QLatin1String("/qmldesigner/propertyEditorQmlSources/imports/HelperWidgets/images/");
+    return QLatin1String(":/images/");
+}
+
+QPixmap AppIconProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize)
+{
+    Q_UNUSED(requestedSize)
+    QPixmap result = getPixmap(id);
+    if (size)
+        *size = result.size();
+    return result;
+}
+
+QPixmap AppIconProvider::getPixmap(const QString &id)
+{
+    QPixmap result;
+
+    if (id == "close")
+        result = TimelineIcons::CLOSE_TOOLBAR.pixmap();
+    else if (id == "plus")
+        result = TimelineIcons::PLUS_TOOLBAR.pixmap();
+    else if (id == "expression")
+        result = Icon({{ iconPath() + QLatin1String("expression.png"), AppTheme::QmlDesigner_HighlightColor}}).pixmap();
+    else if (id == "placeholder")
+        result = Icon(iconPath() + "placeholder.png").pixmap();
+    else if (id == "submenu")
+        result = Icon(iconPath() + "submenu.png").pixmap();
+    else if (id == "up-arrow")
+        result = Icon({
+                { iconPath() + QLatin1String("up-arrow.png"), AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "down-arrow")
+        result = Icon({
+                { iconPath() + QLatin1String("down-arrow.png"), AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "checkbox-indicator")
+        result = Icon({
+                { ":/qmldesigner/images/checkbox_indicator.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "tr")
+        result = Icon({
+                { ":/qmldesigner/images/tr.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "ok")
+        result = Icon({
+                { ":/utils/images/ok.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "error")
+        result = Icon({
+                { ":/utils/images/broken.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-top")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_top.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-right")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_right.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-bottom")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_bottom.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-left")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_left.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-horizontal")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_horizontal.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-vertical")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_vertical.png", AppTheme::IconsBaseColor},
+                { ":/qmldesigner/images/anchoreditem.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "anchor-fill")
+        result = Icon({
+                { ":/qmldesigner/images/anchor_fill.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-left")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_left.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-left-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_left.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-center")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_center.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-center-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_center.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-right")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_right.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-right-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_right.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-top")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_top.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-top-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_top.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-middle")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_middle.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-middle-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_middle.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-bottom")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_bottom.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "alignment-bottom-h")
+        result = Icon({
+                { ":/qmldesigner/images/alignment_bottom.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "style-bold")
+        result = Icon({
+                { ":/qmldesigner/images/style_bold.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "style-bold-h")
+        result = Icon({
+                { ":/qmldesigner/images/style_bold.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "style-italic")
+        result = Icon({
+                { ":/qmldesigner/images/style_italic.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "style-italic-h")
+        result = Icon({
+                { ":/qmldesigner/images/style_italic.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "style-underline")
+        result = Icon({
+                { ":/qmldesigner/images/style_underline.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "style-underline-h")
+        result = Icon({
+                { ":/qmldesigner/images/style_underline.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else if (id == "style-strikeout")
+        result = Icon({
+                { ":/qmldesigner/images/style_strikeout.png", AppTheme::IconsBaseColor}}, Icon::Tint).pixmap();
+    else if (id == "style-strikeout-h")
+        result = Icon({
+                { ":/qmldesigner/images/style_strikeout.png", AppTheme::QmlDesigner_HighlightColor}}, Icon::Tint).pixmap();
+    else
+        qWarning() << Q_FUNC_INFO << "Image not found:" << id;
+
+    return result;
 }

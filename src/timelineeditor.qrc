@@ -75,5 +75,11 @@
         <file>images/remove_timeline@2x.png</file>
         <file>images/curveGraphIcon.png</file>
         <file>images/curveGraphIcon@2x.png</file>
+        <file>themes/dark.theme</file>
+        <file>themes/default.theme</file>
+        <file>themes/design.theme</file>
+        <file>themes/flat.theme</file>
+        <file>themes/flat-dark.theme</file>
+        <file>themes/flat-light.theme</file>
     </qresource>
 </RCC>

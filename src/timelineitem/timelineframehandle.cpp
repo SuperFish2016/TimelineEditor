@@ -6,10 +6,11 @@
 #include <QPainter>
 #include <QCursor>
 #include <QGraphicsView>
+#include "timelinetheme.h"
 TimelineFrameHandle::TimelineFrameHandle(TimelineItem *parent)
     : TimelineMovableItem(parent)
 {
-    static const QColor color = Qt::red;//Theme::getColor(Theme::IconsWarningToolBarColor);
+    static const QColor color =  TimelineTheme::getColor(AppTheme::IconsWarningToolBarColor);
     setBrush(color);
     setPen(color);
 
