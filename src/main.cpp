@@ -1,12 +1,10 @@
 ﻿#include "timelinewidget.h"
 #include <QApplication>
 #include "timelinetheme.h"
-
+#include "timelinetoolbar.h"
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    TimelineWidget w;
-    w.show();
 
     AppTheme::initialPalette();
     QSettings themeSettings(":/themes/design.theme", QSettings::IniFormat);
@@ -14,7 +12,9 @@ int main(int argc, char *argv[])
     appTheme->readSettings(themeSettings);
     setAppTheme(appTheme);
 
-    w.setStyleSheet(QString("background-color: %1").arg(TimelineTheme::instance()->qmlDesignerBackgroundColorDarker().name()));
+    TimelineWidget w;
+    TimelineToolBar tb(&w);
+    w.show();
 
     return a.exec();
 }

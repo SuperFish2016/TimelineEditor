@@ -1,6 +1,6 @@
 ﻿#ifndef TIMELINEUTILS_H
 #define TIMELINEUTILS_H
-
+#include "timelineicon.h"
 #include <vector>
 namespace TimelineUtils
 {
@@ -24,6 +24,13 @@ namespace TimelineUtils
         static_assert(std::is_floating_point<T>::value,
                       "TimelineUtils::reverseLerp: For floating point types only!");
         return (val - rhs) / (lhs - rhs);
+    }
+    inline QIcon mergeIcons(const Icon &on, const Icon &off)
+    {
+        QIcon out;
+        out.addPixmap(on.pixmap(), QIcon::Normal, QIcon::On);
+        out.addPixmap(off.pixmap(), QIcon::Normal, QIcon::Off);
+        return out;
     }
 };
 
