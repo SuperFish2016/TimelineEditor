@@ -3,6 +3,7 @@
 
 #include <QGraphicsScene>
 class TimelineWidget;
+class TimelineLayout;
 class TimelineGraphicsScene : public QGraphicsScene
 {
 public:
@@ -16,14 +17,14 @@ public:
     int scrollOffset() const;
     void setScrollOffset(int offset);
 
-
-
     qreal startFrame() const;
     qreal endFrame() const;
 
     void commitCurrentFrame(qreal frame);
 
     void invalidateScrollbar();
+private:
+    TimelineLayout* layout_;
 };
 
 #endif // TIMELINEGRAPHICSSCENE_H

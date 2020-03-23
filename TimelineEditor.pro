@@ -40,7 +40,9 @@ SOURCES += \
     src/timelineutils/timelineicon.cpp \
     src/timelineutils/timelinetheme.cpp \
     src/timelineutils/apptheme.cpp \
-    src/timelinetoolbar.cpp
+    src/timelinetoolbar.cpp \
+    src/timelineitem/timelinelayout.cpp \
+    src/timelineitem/timelineruler.cpp
 
 HEADERS += \
     src/timelinewidget.h \
@@ -57,7 +59,9 @@ HEADERS += \
     src/timelineutils/timelineicon.h \
     src/timelineutils/timelinetheme.h \
     src/timelineutils/apptheme.h \
-    src/timelinetoolbar.h
+    src/timelinetoolbar.h \
+    src/timelineitem/timelinelayout.h \
+    src/timelineitem/timelineruler.h
 
 FORMS +=
 

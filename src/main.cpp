@@ -2,6 +2,9 @@
 #include <QApplication>
 #include "timelinetheme.h"
 #include "timelinetoolbar.h"
+
+// This is from Github code
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

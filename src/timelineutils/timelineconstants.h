@@ -6,5 +6,8 @@ namespace TimelineConstants {
     const int timelineLeftOffset = 20;
     const int moveableAbstractItemUserType = 1;
     const int rulerHeight = 80;
+
+    const int keyFrameSize = 30;
+    const int keyFrameMargin = 23;
 }
 #endif // TIMELINECONSTANTS_H
